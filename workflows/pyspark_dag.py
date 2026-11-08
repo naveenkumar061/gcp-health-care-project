@@ -15,8 +15,12 @@ REGION = "us-east1"
 CLUSTER_NAME = "my-demo-cluster"
 COMPOSER_BUCKET = "us-central1-demo-instance-e3396285-bucket"
 
-# Clean configuration layout compatible with your environment version
+# CRITICAL STRUCTURAL FIX: Wrapped inner configurations inside structural API blocks
+# to comply with strict Dataproc API validation expectations.
 CLUSTER_CONFIG = {
+    "gce_cluster_config": {
+        "zone_uri": "us-east1-b",  # Matches your us-east1 region selection
+    },
     "master_config": {
         "num_instances": 1,
         "machine_type_uri": "n1-standard-4",
@@ -71,7 +75,7 @@ ARGS = {
     "retry_delay": timedelta(minutes=5),
 }
 
-# CRITICAL FIX: Explicit global instantiation to force Airflow parsing engine recognition
+# Explicit global instantiation to force Airflow parsing engine recognition
 dag = DAG(
     dag_id="pyspark_dag",
     schedule_interval=None,
