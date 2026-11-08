@@ -1,15 +1,13 @@
-import airflow
+from datetime import datetime, timedelta
 from airflow import DAG
-from datetime import timedelta
-from airflow.utils.dates import days_ago
-
-# Note: Modern Airflow versions recommend importing from .trigger_dagrun
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 # Define default arguments
-ARGS = {
+DEFAULT_ARGS = {
     "owner": "D Naveen Kumar GCP Data Engineering",
-    "start_date": days_ago(1),
+    "start_date": datetime(
+        2026, 11, 1
+    ),  # Explicit start date to prevent scheduling lockups
     "depends_on_past": False,
     "email_on_failure": False,
     "email_on_retry": False,
@@ -19,33 +17,32 @@ ARGS = {
     "retry_delay": timedelta(minutes=5),
 }
 
-# Define the parent DAG
+# Define the parent orchestration DAG
 with DAG(
     dag_id="parent_dag",
-    schedule_interval="0 5 * * *",
-    description="Parent DAG to trigger PySpark and BigQuery DAGs",
-    default_args=ARGS,
+    schedule_interval="0 5 * * *",  # Runs daily at 05:00 AM UTC
+    description="Parent DAG to orchestrate PySpark and BigQuery ETL pipelines sequentially",
+    default_args=DEFAULT_ARGS,
+    catchup=False,
     tags=["parent", "orchestration", "etl"],
 ) as dag:
-    # Task to trigger PySpark DAG
+    # Task to trigger the PySpark data ingestion pipeline
     trigger_pyspark_dag = TriggerDagRunOperator(
         task_id="trigger_pyspark_dag",
         trigger_dag_id="pyspark_dag",
         wait_for_completion=True,
-        poke_interval=60,  # Check the status of the downstream DAG every 60 seconds
-        execution_timeout=timedelta(
-            hours=2
-        ),  # Prevents SIGTERM by allowing the task to run up to 2 hours
+        poke_interval=30,  # Checks status every 30 seconds rather than flooding the database
+        reset_dag_run=True,  # Clear and rerun the target DAG if it already ran for this execution date
     )
 
-    # Task to trigger BigQuery DAG
+    # Task to trigger the BigQuery data warehouse refinement pipeline
     trigger_bigquery_dag = TriggerDagRunOperator(
         task_id="trigger_bigquery_dag",
         trigger_dag_id="bigquery_dag",
         wait_for_completion=True,
         poke_interval=30,
-        execution_timeout=timedelta(hours=1),
+        reset_dag_run=True,
     )
 
-# Define dependencies
+# Define sequential execution dependencies
 trigger_pyspark_dag >> trigger_bigquery_dag

@@ -1,22 +1,36 @@
 steps:
-  # Step 1: Install Python dependencies
+  # Step 1: Install Python dependencies needed by the upload tool
   - name: "python"
     entrypoint: pip
     args: ["install", "-r", "utils/requirements.txt", "--user"]
 
-  # Step 2: Run the script to upload DAGs and Data to Composer bucket
+  # Step 2: Run the script to upload DAGs and Data to the Composer bucket
   - name: "python"
     entrypoint: python
     args:
       - "utils/add_dags_to_composer.py"
       - "--dags_directory=${_DAGS_DIRECTORY}"
-      - "--dags_bucket=${_DAGS_BUCKET}"
       - "--data_directory=${_DATA_DIRECTORY}"
+      - "--composer_bucket=${_DAGS_BUCKET}"
+      # Optional optimization: explicit worker threads flag
+      # - "--threads=16"
+
+  # Step 3: Automatically trigger the orchestration parent DAG upon successful code push
+  - name: "gcr.io/://google.com"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        gcloud composer environments run ${_COMPOSER_ENV_NAME} \
+          --location ${_COMPOSER_REGION} \
+          dags trigger -- parent_dag
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
   _DAGS_DIRECTORY: "workflows/"
-  _DAGS_BUCKET: "us-central1-demo-instance-e3396285-bucket" # Replaced with your Composer bucket
   _DATA_DIRECTORY: "data/"
+  _DAGS_BUCKET: "us-east4-demo-instance-186ddff6-bucket" # Updated to match your ingestion scripts bucket configuration
+  _COMPOSER_ENV_NAME: "demo-instance" # Update this with your actual Cloud Composer environment name
+  _COMPOSER_REGION: "us-east4" # Update this with your environment's region

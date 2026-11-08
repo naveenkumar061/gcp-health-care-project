@@ -1,5 +1,4 @@
-google-cloud-storage  # For interacting with GCS
-# google-cloud-bigquery  # For BigQuery operations
-# google-cloud-dataproc  # For Dataproc cluster and job management
-# google-cloud-pubsub  # Optional: If using Pub/Sub triggers
-# google-cloud-dataflow  # If you are using Dataflow with Python SDK
+google-cloud-storage>=2.10.0      # For interacting with GCS buckets and paths
+google-cloud-bigquery>=3.11.0     # For loading, querying, and auditing BigQuery tables
+google-cloud-dataproc>=5.5.0      # For creating, managing, and spinning up Dataproc clusters
+pandas>=2.0.0                     # Essential for local text data manipulation before GCS uploads
