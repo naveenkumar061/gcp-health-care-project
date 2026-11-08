@@ -2,7 +2,9 @@ import airflow
 from airflow import DAG
 from datetime import timedelta
 from airflow.utils.dates import days_ago
-from airflow.operators.dagrun_operator import TriggerDagRunOperator
+
+# Note: Modern Airflow versions recommend importing from .trigger_dagrun
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 # Define default arguments
 ARGS = {
@@ -30,6 +32,10 @@ with DAG(
         task_id="trigger_pyspark_dag",
         trigger_dag_id="pyspark_dag",
         wait_for_completion=True,
+        poke_interval=60,  # Check the status of the downstream DAG every 60 seconds
+        execution_timeout=timedelta(
+            hours=2
+        ),  # Prevents SIGTERM by allowing the task to run up to 2 hours
     )
 
     # Task to trigger BigQuery DAG
@@ -37,6 +43,8 @@ with DAG(
         task_id="trigger_bigquery_dag",
         trigger_dag_id="bigquery_dag",
         wait_for_completion=True,
+        poke_interval=30,
+        execution_timeout=timedelta(hours=1),
     )
 
 # Define dependencies
