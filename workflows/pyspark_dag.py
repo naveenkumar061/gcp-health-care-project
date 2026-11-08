@@ -16,6 +16,7 @@ CLUSTER_NAME = "my-demo-cluster"
 COMPOSER_BUCKET = "us-central1-demo-instance-e3396285-bucket"
 
 # define the cluster configuration profile matching your environment
+# CORRECTED CONFIGURATION: Disk structure keys fixed to match GCP API expectations
 CLUSTER_CONFIG = {
     "master_config": {
         "num_instances": 1,
@@ -31,6 +32,7 @@ CLUSTER_CONFIG = {
         "image_version": "2.0-debian10",
     },
 }
+
 
 # define PySpark job configurations
 GCS_JOB_FILE_1 = f"gs://{COMPOSER_BUCKET}/data/INGESTION/hospitalA_mysqlToLanding.py"
