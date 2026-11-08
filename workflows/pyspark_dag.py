@@ -15,24 +15,21 @@ REGION = "us-east1"
 CLUSTER_NAME = "my-demo-cluster"
 COMPOSER_BUCKET = "us-central1-demo-instance-e3396285-bucket"
 
-# define the cluster configuration profile matching your environment
-# CORRECTED CONFIGURATION: Disk structure keys fixed to match GCP API expectations
+# CLEAN CONFIGURATION: Removed sub-disk dictionary parameters to completely bypass validation errors.
+# Dataproc will automatically provision default storage shapes.
 CLUSTER_CONFIG = {
     "master_config": {
         "num_instances": 1,
         "machine_type_uri": "n1-standard-4",
-        "disk_config": {"boot_disk_type": "pd-standard", "boot_disk_size_gb": 500},
     },
     "worker_config": {
         "num_instances": 2,
         "machine_type_uri": "n1-standard-4",
-        "disk_config": {"boot_disk_type": "pd-standard", "boot_disk_size_gb": 500},
     },
     "software_config": {
         "image_version": "2.0-debian10",
     },
 }
-
 
 # define PySpark job configurations
 GCS_JOB_FILE_1 = f"gs://{COMPOSER_BUCKET}/data/INGESTION/hospitalA_mysqlToLanding.py"
@@ -91,7 +88,7 @@ with DAG(
         region=REGION,
         cluster_name=CLUSTER_NAME,
         cluster_config=CLUSTER_CONFIG,
-        use_if_exists=True,  # Safety check: hooks into existing cluster if left running [1]
+        use_if_exists=True,
     )
 
     # 2. PySpark Execution Jobs
@@ -123,8 +120,7 @@ with DAG(
         project_id=PROJECT_ID,
     )
 
-    # 3. Delete Cluster Task (Clean teardown)
-    # Note: DataprocDeleteClusterOperator is preferred over Stop for complete cost elimination
+    # 3. Delete Cluster Task
     stop_cluster = DataprocDeleteClusterOperator(
         task_id="stop_cluster",
         project_id=PROJECT_ID,
