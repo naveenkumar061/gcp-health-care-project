@@ -71,60 +71,67 @@ ARGS = {
     "retry_delay": timedelta(minutes=5),
 }
 
-# define the dag
-with DAG(
+# CRITICAL FIX: Explicit global instantiation to force Airflow parsing engine recognition
+dag = DAG(
     dag_id="pyspark_dag",
     schedule_interval=None,
     description="DAG to start a Dataproc cluster, run PySpark jobs, and stop the cluster",
     default_args=ARGS,
     catchup=False,
     tags=["pyspark", "dataproc", "etl", "marvel"],
-) as dag:
-    # 1. Start Cluster Task (CRITICAL FIX: Removed use_if_exists parameter)
-    start_cluster = DataprocStartClusterOperator(
-        task_id="start_cluster",
-        project_id=PROJECT_ID,
-        region=REGION,
-        cluster_name=CLUSTER_NAME,
-        cluster_config=CLUSTER_CONFIG,
-    )
+)
 
-    # 2. PySpark Execution Jobs
-    pyspark_task_1 = DataprocSubmitJobOperator(
-        task_id="pyspark_task_1",
-        job=PYSPARK_JOB_1,
-        region=REGION,
-        project_id=PROJECT_ID,
-    )
+# 1. Start Cluster Task
+start_cluster = DataprocStartClusterOperator(
+    task_id="start_cluster",
+    project_id=PROJECT_ID,
+    region=REGION,
+    cluster_name=CLUSTER_NAME,
+    cluster_config=CLUSTER_CONFIG,
+    dag=dag,
+)
 
-    pyspark_task_2 = DataprocSubmitJobOperator(
-        task_id="pyspark_task_2",
-        job=PYSPARK_JOB_2,
-        region=REGION,
-        project_id=PROJECT_ID,
-    )
+# 2. PySpark Execution Jobs
+pyspark_task_1 = DataprocSubmitJobOperator(
+    task_id="pyspark_task_1",
+    job=PYSPARK_JOB_1,
+    region=REGION,
+    project_id=PROJECT_ID,
+    dag=dag,
+)
 
-    pyspark_task_3 = DataprocSubmitJobOperator(
-        task_id="pyspark_task_3",
-        job=PYSPARK_JOB_3,
-        region=REGION,
-        project_id=PROJECT_ID,
-    )
+pyspark_task_2 = DataprocSubmitJobOperator(
+    task_id="pyspark_task_2",
+    job=PYSPARK_JOB_2,
+    region=REGION,
+    project_id=PROJECT_ID,
+    dag=dag,
+)
 
-    pyspark_task_4 = DataprocSubmitJobOperator(
-        task_id="pyspark_task_4",
-        job=PYSPARK_JOB_4,
-        region=REGION,
-        project_id=PROJECT_ID,
-    )
+pyspark_task_3 = DataprocSubmitJobOperator(
+    task_id="pyspark_task_3",
+    job=PYSPARK_JOB_3,
+    region=REGION,
+    project_id=PROJECT_ID,
+    dag=dag,
+)
 
-    # 3. Delete Cluster Task
-    stop_cluster = DataprocDeleteClusterOperator(
-        task_id="stop_cluster",
-        project_id=PROJECT_ID,
-        region=REGION,
-        cluster_name=CLUSTER_NAME,
-    )
+pyspark_task_4 = DataprocSubmitJobOperator(
+    task_id="pyspark_task_4",
+    job=PYSPARK_JOB_4,
+    region=REGION,
+    project_id=PROJECT_ID,
+    dag=dag,
+)
+
+# 3. Delete Cluster Task
+stop_cluster = DataprocDeleteClusterOperator(
+    task_id="stop_cluster",
+    project_id=PROJECT_ID,
+    region=REGION,
+    cluster_name=CLUSTER_NAME,
+    dag=dag,
+)
 
 # define the linear task dependencies
 (
