@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.providers.google.cloud.operators.dataproc import (
     DataprocCreateClusterOperator,
-    DataprocDeleteClusterOperator,
+    DataprocStopClusterOperator,
     DataprocSubmitJobOperator,
 )
 
@@ -120,7 +120,7 @@ with DAG(
     )
 
     # Replaced deprecated StopCluster with DeleteCluster to release resources
-    stop_cluster = DataprocDeleteClusterOperator(
+    stop_cluster = DataprocStopClusterOperator(
         task_id="stop_cluster",
         project_id=PROJECT_ID,
         region=REGION,
