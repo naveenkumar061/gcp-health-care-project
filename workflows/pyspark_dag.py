@@ -15,8 +15,7 @@ REGION = "us-east1"
 CLUSTER_NAME = "my-demo-cluster"
 COMPOSER_BUCKET = "us-central1-demo-instance-e3396285-bucket"
 
-# CLEAN CONFIGURATION: Removed sub-disk dictionary parameters to completely bypass validation errors.
-# Dataproc will automatically provision default storage shapes.
+# Clean configuration layout compatible with your environment version
 CLUSTER_CONFIG = {
     "master_config": {
         "num_instances": 1,
@@ -81,14 +80,13 @@ with DAG(
     catchup=False,
     tags=["pyspark", "dataproc", "etl", "marvel"],
 ) as dag:
-    # 1. Start Cluster Task
+    # 1. Start Cluster Task (CRITICAL FIX: Removed use_if_exists parameter)
     start_cluster = DataprocStartClusterOperator(
         task_id="start_cluster",
         project_id=PROJECT_ID,
         region=REGION,
         cluster_name=CLUSTER_NAME,
         cluster_config=CLUSTER_CONFIG,
-        use_if_exists=True,
     )
 
     # 2. PySpark Execution Jobs
